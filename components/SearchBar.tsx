@@ -3,6 +3,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -13,6 +14,7 @@ interface SearchResult {
 }
 
 const SearchBar: React.FC = () => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -44,10 +46,18 @@ const SearchBar: React.FC = () => {
       const activeItem = results[activeIndex];
       if (activeItem) {
         setSearchQuery(activeItem.name);
+        router.push(`/analyze/${activeItem.name}`);
         setResults([]);
         setActiveIndex(-1);
       }
     }
+  };
+
+  const handleItemClick = (name: string) => {
+    setSearchQuery(name);
+    router.push(`/analyze/${name}`);
+    setResults([]);
+    setActiveIndex(-1);
   };
 
   return (
@@ -78,11 +88,7 @@ const SearchBar: React.FC = () => {
               tabIndex={0}
               onMouseEnter={() => setActiveIndex(index)}
               onMouseLeave={() => setActiveIndex(-1)}
-              onClick={() => {
-                setSearchQuery(result.name);
-                setResults([]);
-                setActiveIndex(-1);
-              }}
+              onClick={() => handleItemClick(result.name)}
             >
               <Image
                 src={result.icon_url}

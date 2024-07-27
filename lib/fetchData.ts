@@ -1,7 +1,7 @@
 // lib/fetchData.ts
 
 const HEADERS = {
-  'User-Agent': 'osrs_flipping_app - contact@example.com',
+  'User-Agent': 'flipsmart - crspears@outlook.com',
 };
 
 export async function fetchData(url: string): Promise<any> {
@@ -10,7 +10,7 @@ export async function fetchData(url: string): Promise<any> {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch data');
+    throw new Error(`Failed to fetch data from ${url}`);
   }
 
   return response.json();
