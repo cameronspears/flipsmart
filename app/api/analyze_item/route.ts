@@ -27,6 +27,7 @@ export async function GET(request: Request) {
     const priceData = latestPriceData.data[item.id] || {};
 
     const data = {
+      id: item.id, // Include the ID here
       high: priceData.high,
       highTime: priceData.highTime ? new Date(priceData.highTime * 1000).toLocaleString() : null,
       low: priceData.low,
