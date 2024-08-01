@@ -24,9 +24,12 @@ const SearchBar: React.FC = () => {
   useEffect(() => {
     if (debouncedSearchQuery) {
       fetch(`/api/search?query=${debouncedSearchQuery}`)
-        .then(response => response.json())
-        .then(data => setResults(data.suggestions))
-        .catch(error => console.error('Error fetching search results:', error));
+        .then((response) => response.json())
+        .then((data) => setResults(data.suggestions || []))
+        .catch((error) => {
+          console.error('Error fetching search results:', error);
+          setResults([]);
+        });
     } else {
       setResults([]);
     }
@@ -41,7 +44,9 @@ const SearchBar: React.FC = () => {
     if (event.key === 'ArrowDown' && results.length > 0) {
       setActiveIndex((prevIndex) => (prevIndex + 1) % results.length);
     } else if (event.key === 'ArrowUp' && results.length > 0) {
-      setActiveIndex((prevIndex) => (prevIndex === 0 ? results.length - 1 : prevIndex - 1));
+      setActiveIndex(
+        (prevIndex) => (prevIndex === 0 ? results.length - 1 : prevIndex - 1)
+      );
     } else if (event.key === 'Enter' && activeIndex >= 0) {
       const activeItem = results[activeIndex];
       if (activeItem) {
@@ -89,15 +94,23 @@ const SearchBar: React.FC = () => {
               onMouseEnter={() => setActiveIndex(index)}
               onMouseLeave={() => setActiveIndex(-1)}
               onClick={() => handleItemClick(result.name)}
+              style={{ height: '45px' }} // Adjust the height of each list item
             >
-              <Image
-                src={result.icon_url}
-                alt={result.name}
-                width={24}
-                height={24}
-                className="mr-2"
-              />
-              <span className="text-gray-900 dark:text-gray-100">{result.name}</span>
+              <div
+                className="mr-2 flex-shrink-0"
+                style={{ width: '40px', height: '40px' }} // Match the container size with the icon size
+              >
+                <Image
+                  src={result.icon_url}
+                  alt={result.name}
+                  width={40} // Ensure icon width matches container
+                  height={40} // Ensure icon height matches container
+                  className="object-contain h-full w-full" // Use object-contain to maintain aspect ratio
+                />
+              </div>
+              <span className="text-gray-900 dark:text-gray-100">
+                {result.name}
+              </span>
             </li>
           ))}
         </ul>
