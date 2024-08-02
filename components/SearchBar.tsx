@@ -2,11 +2,11 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { Input } from '@/components/ui/input';
-import { useDebounce } from '@/hooks/useDebounce';
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface SearchResult {
   name: string;
@@ -15,7 +15,7 @@ interface SearchResult {
 
 const SearchBar: React.FC = () => {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
   const resultsRef = useRef<HTMLUListElement>(null);
@@ -27,7 +27,7 @@ const SearchBar: React.FC = () => {
         .then((response) => response.json())
         .then((data) => setResults(data.suggestions || []))
         .catch((error) => {
-          console.error('Error fetching search results:', error);
+          console.error("Error fetching search results:", error);
           setResults([]);
         });
     } else {
@@ -41,13 +41,13 @@ const SearchBar: React.FC = () => {
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'ArrowDown' && results.length > 0) {
+    if (event.key === "ArrowDown" && results.length > 0) {
       setActiveIndex((prevIndex) => (prevIndex + 1) % results.length);
-    } else if (event.key === 'ArrowUp' && results.length > 0) {
+    } else if (event.key === "ArrowUp" && results.length > 0) {
       setActiveIndex(
         (prevIndex) => (prevIndex === 0 ? results.length - 1 : prevIndex - 1)
       );
-    } else if (event.key === 'Enter' && activeIndex >= 0) {
+    } else if (event.key === "Enter" && activeIndex >= 0) {
       const activeItem = results[activeIndex];
       if (activeItem) {
         setSearchQuery(activeItem.name);
@@ -66,7 +66,7 @@ const SearchBar: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full max-w-md">
+    <div className="relative w-full max-w-md z-50"> {/* Ensure this is on top */}
       <Input
         type="text"
         value={searchQuery}
@@ -82,29 +82,30 @@ const SearchBar: React.FC = () => {
         <ul
           id="search-results"
           ref={resultsRef}
-          className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700"
+          className="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
+          style={{ zIndex: 50, opacity: 0.9 }} // Ensure this is on top and opaque
         >
           {results.map((result, index) => (
             <li
               key={index}
               className={`flex items-center p-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${
-                activeIndex === index ? 'bg-gray-100 dark:bg-gray-700' : ''
+                activeIndex === index ? "bg-gray-100 dark:bg-gray-700" : ""
               }`}
               tabIndex={0}
               onMouseEnter={() => setActiveIndex(index)}
               onMouseLeave={() => setActiveIndex(-1)}
               onClick={() => handleItemClick(result.name)}
-              style={{ height: '45px' }} // Adjust the height of each list item
+              style={{ height: "45px" }} // Adjust the height of each list item
             >
               <div
                 className="mr-2 flex-shrink-0"
-                style={{ width: '40px', height: '40px' }} // Match the container size with the icon size
+                style={{ width: "35px", height: "35px" }} // Match the container size with the icon size
               >
                 <Image
                   src={result.icon_url}
                   alt={result.name}
-                  width={40} // Ensure icon width matches container
-                  height={40} // Ensure icon height matches container
+                  width={35} // Ensure icon width matches container
+                  height={35} // Ensure icon height matches container
                   className="object-contain h-full w-full" // Use object-contain to maintain aspect ratio
                 />
               </div>
