@@ -47,7 +47,7 @@ const AnalyzePage: React.FC = () => {
         .then((response) => response.json())
         .then((data) => {
           setPriceData(data);
-          return fetch(`/api/timeseries?id=${data.id}&timestep=24h`);
+          return fetch(`/api/timeseries?id=${data.id}&timestep=5m`);
         })
         .then((response) => response.json())
         .then((data) => {
@@ -69,9 +69,15 @@ const AnalyzePage: React.FC = () => {
 
   // Calculate min and max values for Y axis
   const yAxisMin =
-    Math.min(...timeSeriesData.map((data) => data.avgLowPrice)) * 0.95;
+    Math.floor(Math.min(...timeSeriesData.map((data) => data.avgLowPrice)) * 0.95);
   const yAxisMax =
-    Math.max(...timeSeriesData.map((data) => data.avgHighPrice)) * 1.05;
+    Math.ceil(Math.max(...timeSeriesData.map((data) => data.avgHighPrice)) * 1.05);
+
+  // Function to format price values
+  const formatPrice = (price: number | null) => {
+    if (price === null) return "N/A";
+    return `${Math.round(price)} GP`;
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 relative">
@@ -97,7 +103,7 @@ const AnalyzePage: React.FC = () => {
             </h2>
           </div>
           <p className="text-lg text-gray-900 dark:text-gray-100">
-            High Price: {priceData.high !== null ? priceData.high : "N/A"}
+            High Price: {formatPrice(priceData.high)}
           </p>
           <p className="text-lg text-gray-900 dark:text-gray-100">
             High Time: {priceData.highTime || "N/A"}
@@ -163,8 +169,14 @@ const AnalyzePage: React.FC = () => {
                     }
                     minTickGap={15} // Add minTickGap to improve spacing
                   />
-                  <YAxis domain={[yAxisMin, yAxisMax]} />
-                  <Tooltip content={<ChartTooltipContent />} />
+                  <YAxis
+                    domain={[yAxisMin, yAxisMax]}
+                    tickFormatter={(tick) => `${Math.round(tick)} GP`} // Format Y-axis labels
+                  />
+                  <Tooltip
+                    content={<ChartTooltipContent />}
+                    formatter={(value: any) => formatPrice(value)} // Format tooltip prices
+                  />
                   <Area
                     type="monotone"
                     dataKey="avgHighPrice"
