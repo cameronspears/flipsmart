@@ -11,8 +11,8 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -47,7 +47,7 @@ const AnalyzePage: React.FC = () => {
         .then((response) => response.json())
         .then((data) => {
           setPriceData(data);
-          return fetch(`/api/timeseries?id=${data.id}&timestep=5m`);
+          return fetch(`/api/timeseries?id=${data.id}&timestep=24h`);
         })
         .then((response) => response.json())
         .then((data) => {
@@ -111,35 +111,75 @@ const AnalyzePage: React.FC = () => {
               className="w-full max-w-4xl"
             >
               <ResponsiveContainer width="100%" height={400}>
-                <LineChart
+                <AreaChart
                   data={timeSeriesData}
                   margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                 >
+                  <defs>
+                    <linearGradient
+                      id="avgHighPriceGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor="#8884d8"
+                        stopOpacity={0.8}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="#8884d8"
+                        stopOpacity={0.1}
+                      />
+                    </linearGradient>
+                    <linearGradient
+                      id="avgLowPriceGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
+                      <stop
+                        offset="95%"
+                        stopColor="#82ca9d"
+                        stopOpacity={0.1}
+                      />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     dataKey="timestamp"
                     tickFormatter={(tick) =>
-                      new Date(tick * 1000).toLocaleTimeString()
+                      new Date(tick * 1000).toLocaleString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
                     }
                     minTickGap={15} // Add minTickGap to improve spacing
                   />
                   <YAxis domain={[yAxisMin, yAxisMax]} />
                   <Tooltip content={<ChartTooltipContent />} />
-                  <Line
+                  <Area
                     type="monotone"
                     dataKey="avgHighPrice"
                     stroke="#8884d8"
-                    dot={false}
-                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#avgHighPriceGradient)"
                   />
-                  <Line
+                  <Area
                     type="monotone"
                     dataKey="avgLowPrice"
                     stroke="#82ca9d"
-                    dot={false}
-                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#avgLowPriceGradient)"
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             </ChartContainer>
           )}

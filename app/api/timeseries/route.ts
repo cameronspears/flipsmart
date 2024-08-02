@@ -8,7 +8,7 @@ const TIMESERIES_API_URL = 'https://prices.runescape.wiki/api/v1/osrs/timeseries
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
-  const timestep = searchParams.get('timestep') || '5m';
+  const timestep = searchParams.get('timestep') || '24h';
 
   if (!id) {
     console.error('ID parameter is missing');
