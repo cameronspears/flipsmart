@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import Image from "next/image"; // Import Image component
+import Image from "next/image";
 import SearchBar from "@/components/SearchBar";
 import {
   ChartContainer,
@@ -19,14 +19,14 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { ModeToggle } from "@/components/ModeToggle"; // Import ModeToggle
+import { ModeToggle } from "@/components/ModeToggle";
 
 interface PriceData {
   high: number | null;
   highTime: string | null;
   iconUrl: string;
   name: string;
-  id: number; // Include the ID in the price data
+  id: number;
 }
 
 interface TimeSeriesData {
@@ -47,17 +47,16 @@ const AnalyzePage: React.FC = () => {
         .then((response) => response.json())
         .then((data) => {
           setPriceData(data);
-          return fetch(`/api/timeseries?id=${data.id}&timestep=5m`);
+          return fetch(`/api/timeseries?id=${data.id}&timestep=24h`);
         })
         .then((response) => response.json())
         .then((data) => {
-          // Ensure the data is in the correct format for the chart
           const formattedData = data.data.map((item: any) => ({
             timestamp: item.timestamp,
             avgHighPrice: item.avgHighPrice,
             avgLowPrice: item.avgLowPrice,
           }));
-          setTimeSeriesData(formattedData);
+          setTimeSeriesData(applyMovingAverage(formattedData, 5)); // Apply smoothing
         })
         .catch((error) => console.error(error));
     }
@@ -67,21 +66,29 @@ const AnalyzePage: React.FC = () => {
     return <div>Please select an item to analyze.</div>;
   }
 
-  // Calculate min and max values for Y axis
-  const yAxisMin =
-    Math.floor(Math.min(...timeSeriesData.map((data) => data.avgLowPrice)) * 0.95);
-  const yAxisMax =
-    Math.ceil(Math.max(...timeSeriesData.map((data) => data.avgHighPrice)) * 1.05);
+  const yAxisMin = Math.floor(Math.min(...timeSeriesData.map((data) => data.avgLowPrice)) * 0.95);
+  const yAxisMax = Math.ceil(Math.max(...timeSeriesData.map((data) => data.avgHighPrice)) * 1.05);
 
-  // Function to format price values
   const formatPrice = (price: number | null) => {
     if (price === null) return "N/A";
     return `${Math.round(price)} GP`;
   };
 
+  // Apply a simple moving average to smooth the data
+  function applyMovingAverage(data: TimeSeriesData[], windowSize: number): TimeSeriesData[] {
+    return data.map((value, index, array) => {
+      const start = Math.max(0, index - Math.floor(windowSize / 2));
+      const end = Math.min(array.length, index + Math.ceil(windowSize / 2));
+      const slice = array.slice(start, end);
+      const avgHighPrice = slice.reduce((acc, val) => acc + (val.avgHighPrice || 0), 0) / slice.length;
+      const avgLowPrice = slice.reduce((acc, val) => acc + (val.avgLowPrice || 0), 0) / slice.length;
+      return { ...value, avgHighPrice, avgLowPrice };
+    });
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 relative">
-      <ModeToggle /> {/* Add ModeToggle component */}
+      <ModeToggle />
       <h1 className="text-4xl font-bold mb-6 text-gray-900 dark:text-gray-100 z-10">
         Flipsmart
       </h1>
@@ -95,8 +102,8 @@ const AnalyzePage: React.FC = () => {
               src={priceData.iconUrl}
               alt={priceData.name}
               className="mr-2"
-              width={24} // Set appropriate width
-              height={24} // Set appropriate height
+              width={24}
+              height={24}
             />
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {priceData.name}
@@ -167,25 +174,25 @@ const AnalyzePage: React.FC = () => {
                         minute: "2-digit",
                       })
                     }
-                    minTickGap={15} // Add minTickGap to improve spacing
+                    minTickGap={15}
                   />
                   <YAxis
                     domain={[yAxisMin, yAxisMax]}
-                    tickFormatter={(tick) => `${Math.round(tick)} GP`} // Format Y-axis labels
+                    tickFormatter={(tick) => `${Math.round(tick)} GP`}
                   />
                   <Tooltip
                     content={<ChartTooltipContent />}
-                    formatter={(value: any) => formatPrice(value)} // Format tooltip prices
+                    formatter={(value: any) => formatPrice(value)}
                   />
                   <Area
-                    type="monotone"
+                    type="natural" // Use a natural spline for smoothing
                     dataKey="avgHighPrice"
                     stroke="#8884d8"
                     fillOpacity={1}
                     fill="url(#avgHighPriceGradient)"
                   />
                   <Area
-                    type="monotone"
+                    type="natural" // Use a natural spline for smoothing
                     dataKey="avgLowPrice"
                     stroke="#82ca9d"
                     fillOpacity={1}
