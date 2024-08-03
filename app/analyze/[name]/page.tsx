@@ -1,5 +1,3 @@
-// app/analyze/[name]/page.tsx
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -69,9 +67,19 @@ const AnalyzePage: React.FC = () => {
   const yAxisMin = Math.floor(Math.min(...timeSeriesData.map((data) => data.avgLowPrice)) * 0.95);
   const yAxisMax = Math.ceil(Math.max(...timeSeriesData.map((data) => data.avgHighPrice)) * 1.05);
 
+  const formatNumber = (value: number): string => {
+    if (value >= 1000000) {
+      return `${(value / 1000000).toFixed(3)}M`;
+    } else if (value >= 1000) {
+      return `${(value / 1000).toFixed(2)}K`;
+    } else {
+      return value.toString();
+    }
+  };
+
   const formatPrice = (price: number | null) => {
     if (price === null) return "N/A";
-    return `${Math.round(price)} GP`;
+    return `${formatNumber(price)} GP`;
   };
 
   // Apply a simple moving average to smooth the data
@@ -178,11 +186,11 @@ const AnalyzePage: React.FC = () => {
                   />
                   <YAxis
                     domain={[yAxisMin, yAxisMax]}
-                    tickFormatter={(tick) => `${Math.round(tick)} GP`}
+                    tickFormatter={(tick) => `${formatNumber(tick)} GP`}
                   />
                   <Tooltip
                     content={<ChartTooltipContent />}
-                    formatter={(value: any) => formatPrice(value)}
+                    formatter={(value: any) => `${formatNumber(value)} GP`}
                   />
                   <Area
                     type="natural" // Use a natural spline for smoothing
