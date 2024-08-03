@@ -79,7 +79,7 @@ const AnalyzePage: React.FC = () => {
 
   const formatPrice = (price: number | null) => {
     if (price === null) return "N/A";
-    return `${formatNumber(price)} GP`;
+    return `${formatNumber(price)}\u00A0GP`; // Use a non-breaking space
   };
 
   // Apply a simple moving average to smooth the data
@@ -186,11 +186,14 @@ const AnalyzePage: React.FC = () => {
                   />
                   <YAxis
                     domain={[yAxisMin, yAxisMax]}
-                    tickFormatter={(tick) => `${formatNumber(tick)} GP`}
+                    tickFormatter={(tick) => `${formatNumber(tick)}\u00A0GP`} // Use a non-breaking space
+                    width={100} // Increase width to fit longer labels
+                    tick={{ dx: -5 }} // Optional: Adjust the position
+                    style={{ fontSize: '12px' }} // Optional: Adjust font size for better fit
                   />
                   <Tooltip
                     content={<ChartTooltipContent />}
-                    formatter={(value: any) => `${formatNumber(value)} GP`}
+                    formatter={(value: any) => `${formatNumber(value)}\u00A0GP`} // Use a non-breaking space
                   />
                   <Area
                     type="natural" // Use a natural spline for smoothing
