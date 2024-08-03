@@ -3,7 +3,6 @@
 import { NextResponse } from 'next/server';
 import { fetchData, getIconUrl } from '@/lib/fetchData';
 
-const LATEST_PRICE_API_URL = 'https://prices.runescape.wiki/api/v1/osrs/latest';
 const MAPPING_URL = 'https://prices.runescape.wiki/api/v1/osrs/mapping';
 
 export async function GET(request: Request) {
@@ -23,15 +22,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
-    const latestPriceData = await fetchData(`${LATEST_PRICE_API_URL}?id=${item.id}`);
-    const priceData = latestPriceData.data[item.id] || {};
 
     const data = {
       id: item.id, // Include the ID here
-      high: priceData.high,
-      highTime: priceData.highTime ? new Date(priceData.highTime * 1000).toLocaleString() : null,
-      low: priceData.low,
-      lowTime: priceData.lowTime ? new Date(priceData.lowTime * 1000).toLocaleString() : null,
       iconUrl: getIconUrl(item.icon),
       name: item.name,
     };

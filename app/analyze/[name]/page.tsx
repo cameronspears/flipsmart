@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import SearchBar from "@/components/SearchBar";
@@ -17,6 +17,13 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ModeToggle } from "@/components/ModeToggle";
 
 interface PriceData {
@@ -38,6 +45,21 @@ const AnalyzePage: React.FC = () => {
   const { name } = params;
   const [priceData, setPriceData] = useState<PriceData | null>(null);
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
+  const [timeRange, setTimeRange] = useState("1y"); // Default to 1 Year
+
+  const fetchTimeSeriesData = useCallback((id: number, range: string) => {
+    fetch(`/api/timeseries?id=${id}&timestep=24h`)
+      .then((response) => response.json())
+      .then((data) => {
+        const formattedData = data.data.map((item: any) => ({
+          timestamp: item.timestamp,
+          avgHighPrice: item.avgHighPrice,
+          avgLowPrice: item.avgLowPrice,
+        }));
+        setTimeSeriesData(filterDataByRange(formattedData, range)); // Filter data
+      })
+      .catch((error) => console.error(error));
+  }, []);
 
   useEffect(() => {
     if (name) {
@@ -45,20 +67,23 @@ const AnalyzePage: React.FC = () => {
         .then((response) => response.json())
         .then((data) => {
           setPriceData(data);
-          return fetch(`/api/timeseries?id=${data.id}&timestep=24h`);
-        })
-        .then((response) => response.json())
-        .then((data) => {
-          const formattedData = data.data.map((item: any) => ({
-            timestamp: item.timestamp,
-            avgHighPrice: item.avgHighPrice,
-            avgLowPrice: item.avgLowPrice,
-          }));
-          setTimeSeriesData(applyMovingAverage(formattedData, 5)); // Apply smoothing
+          fetchTimeSeriesData(data.id, timeRange); // Fetch data based on the time range
         })
         .catch((error) => console.error(error));
     }
-  }, [name]);
+  }, [name, timeRange, fetchTimeSeriesData]); // Include fetchTimeSeriesData in the dependencies array
+
+  const filterDataByRange = (data: TimeSeriesData[], range: string): TimeSeriesData[] => {
+    let numDays;
+    if (range === "1y") {
+      numDays = 365;
+    } else if (range === "6m") {
+      numDays = 180;
+    } else {
+      numDays = 90;
+    }
+    return data.slice(-numDays); // Get the last `numDays` data points
+  };
 
   if (!name) {
     return <div>Please select an item to analyze.</div>;
@@ -83,17 +108,6 @@ const AnalyzePage: React.FC = () => {
   };
 
   // Apply a simple moving average to smooth the data
-  function applyMovingAverage(data: TimeSeriesData[], windowSize: number): TimeSeriesData[] {
-    return data.map((value, index, array) => {
-      const start = Math.max(0, index - Math.floor(windowSize / 2));
-      const end = Math.min(array.length, index + Math.ceil(windowSize / 2));
-      const slice = array.slice(start, end);
-      const avgHighPrice = slice.reduce((acc, val) => acc + (val.avgHighPrice || 0), 0) / slice.length;
-      const avgLowPrice = slice.reduce((acc, val) => acc + (val.avgLowPrice || 0), 0) / slice.length;
-      return { ...value, avgHighPrice, avgLowPrice };
-    });
-  }
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 relative">
       <ModeToggle />
@@ -117,12 +131,24 @@ const AnalyzePage: React.FC = () => {
               {priceData.name}
             </h2>
           </div>
-          <p className="text-lg text-gray-900 dark:text-gray-100">
-            High Price: {formatPrice(priceData.high)}
-          </p>
-          <p className="text-lg text-gray-900 dark:text-gray-100">
-            High Time: {priceData.highTime || "N/A"}
-          </p>
+          <div className="w-full flex justify-center my-4">
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-[160px] rounded-lg" aria-label="Select a time range">
+                <SelectValue placeholder="Select time range" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="1y" className="rounded-lg">
+                  Last 1 Year
+                </SelectItem>
+                <SelectItem value="6m" className="rounded-lg">
+                  Last 6 Months
+                </SelectItem>
+                <SelectItem value="3m" className="rounded-lg">
+                  Last 3 Months
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {timeSeriesData.length > 0 && (
             <ChartContainer
               config={{
