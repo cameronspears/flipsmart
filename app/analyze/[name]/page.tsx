@@ -23,7 +23,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"; // Simplified import
 import { ModeToggle } from "@/components/ModeToggle";
 
 interface PriceData {
@@ -45,7 +45,7 @@ const AnalyzePage: React.FC = () => {
   const { name } = params;
   const [priceData, setPriceData] = useState<PriceData | null>(null);
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
-  const [timeRange, setTimeRange] = useState("1y"); // Default to 1 Year
+  const [timeRange, setTimeRange] = useState("3m"); // Default to 3 Months
 
   const fetchTimeSeriesData = useCallback((id: number, range: string) => {
     fetch(`/api/timeseries?id=${id}&timestep=24h`)
@@ -102,17 +102,11 @@ const AnalyzePage: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: number | null) => {
-    if (price === null) return "N/A";
-    return `${formatNumber(price)}\u00A0GP`; // Use a non-breaking space
-  };
-
-  // Apply a simple moving average to smooth the data
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 relative">
       <ModeToggle />
       <h1 className="text-4xl font-bold mb-6 text-gray-900 dark:text-gray-100 z-10">
-        Flipsmart
+        {priceData?.name || "Loading..."}
       </h1>
       <div className="w-full max-w-md mb-6 z-20">
         <SearchBar />
@@ -133,18 +127,27 @@ const AnalyzePage: React.FC = () => {
           </div>
           <div className="w-full flex justify-center my-4">
             <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-[160px] rounded-lg" aria-label="Select a time range">
+              <SelectTrigger className="w-[120px] p-2 border rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
                 <SelectValue placeholder="Select time range" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="1y" className="rounded-lg">
-                  Last 1 Year
+              <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+                <SelectItem
+                  value="1y"
+                  className="hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white"
+                >
+                  1 year
                 </SelectItem>
-                <SelectItem value="6m" className="rounded-lg">
-                  Last 6 Months
+                <SelectItem
+                  value="6m"
+                  className="hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white"
+                >
+                  6 months
                 </SelectItem>
-                <SelectItem value="3m" className="rounded-lg">
-                  Last 3 Months
+                <SelectItem
+                  value="3m"
+                  className="hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white"
+                >
+                  3 months
                 </SelectItem>
               </SelectContent>
             </Select>

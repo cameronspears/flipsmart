@@ -1,5 +1,3 @@
-// components/SearchBar.tsx
-
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -83,7 +81,7 @@ const SearchBar: React.FC = () => {
           id="search-results"
           ref={resultsRef}
           className="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
-          style={{ zIndex: 50, opacity: 0.9 }} // Ensure this is on top and opaque
+          style={{ opacity: 0.9 }} // Ensure this is on top and opaque
         >
           {results.map((result, index) => (
             <li
