@@ -2,10 +2,23 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";  // Import the Link component
+import Link from "next/link";
 import Image from "next/image";
-import SearchBar from "@/components/SearchBar";
-import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { TrendingUp, TrendingDown } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import {
   AreaChart,
   Area,
@@ -23,6 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ModeToggle } from "@/components/ModeToggle";
+import SearchBar from "@/components/SearchBar";
 
 interface PriceData {
   high: number | null;
@@ -33,7 +47,7 @@ interface PriceData {
 }
 
 interface TimeSeriesData {
-  timestamp: number;
+  date: string; // Change to string
   avgHighPrice: number;
   avgLowPrice: number;
 }
@@ -50,7 +64,7 @@ const AnalyzePage: React.FC = () => {
       .then((response) => response.json())
       .then((data) => {
         const formattedData = data.data.map((item: any) => ({
-          timestamp: item.timestamp,
+          date: item.date,  // Use date string
           avgHighPrice: item.avgHighPrice,
           avgLowPrice: item.avgLowPrice,
         }));
@@ -87,6 +101,7 @@ const AnalyzePage: React.FC = () => {
     return <div>Please select an item to analyze.</div>;
   }
 
+  // Revert yAxis settings to auto-scale
   const yAxisMin = Math.floor(Math.min(...timeSeriesData.map((data) => data.avgLowPrice)) * 0.95);
   const yAxisMax = Math.ceil(Math.max(...timeSeriesData.map((data) => data.avgHighPrice)) * 1.05);
 
@@ -98,6 +113,33 @@ const AnalyzePage: React.FC = () => {
     } else {
       return value.toString();
     }
+  };
+
+  // Calculate price trend
+  const calculatePriceTrend = () => {
+    if (timeSeriesData.length < 2) return null;
+
+    const firstPrice = timeSeriesData[0].avgHighPrice;
+    const lastPrice = timeSeriesData[timeSeriesData.length - 1].avgHighPrice;
+
+    if (firstPrice === null || lastPrice === null) return null;
+
+    const change = ((lastPrice - firstPrice) / firstPrice) * 100;
+    return change.toFixed(2); // Return percentage change
+  };
+
+  const priceTrend = calculatePriceTrend();
+
+  // Chart configuration
+  const chartConfig = {
+    avgHighPrice: {
+      label: "High Price",
+      color: "hsl(var(--chart-1))",
+    },
+    avgLowPrice: {
+      label: "Low Price",
+      color: "hsl(var(--chart-2))",
+    },
   };
 
   return (
@@ -113,135 +155,139 @@ const AnalyzePage: React.FC = () => {
       </div>
       {priceData ? (
         <div className="text-center w-full max-w-4xl z-10">
-          <div className="flex items-center justify-center mb-4">
-            <Image
-              src={priceData.iconUrl}
-              alt={priceData.name}
-              className="mr-2"
-              width={24}
-              height={24}
-            />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {priceData.name}
-            </h2>
-          </div>
-          <div className="w-full flex justify-center my-4">
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-[120px] p-2 border rounded-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
-                <SelectValue placeholder="Select time range" />
-              </SelectTrigger>
-              <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-                <SelectItem
-                  value="1y"
-                  className="hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white"
-                >
-                  1 year
-                </SelectItem>
-                <SelectItem
-                  value="6m"
-                  className="hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white"
-                >
-                  6 months
-                </SelectItem>
-                <SelectItem
-                  value="3m"
-                  className="hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white"
-                >
-                  3 months
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {timeSeriesData.length > 0 && (
-            <ChartContainer
-              config={{
-                avgHighPrice: { color: "#8884d8" },
-                avgLowPrice: { color: "#82ca9d" },
-              }}
-              className="w-full max-w-4xl"
-            >
-              <ResponsiveContainer width="100%" height={400}>
-                <AreaChart
-                  data={timeSeriesData}
-                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient
-                      id="avgHighPriceGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="5%"
-                        stopColor="#8884d8"
-                        stopOpacity={0.8}
-                      />
-                      <stop
-                        offset="95%"
-                        stopColor="#8884d8"
-                        stopOpacity={0.1}
-                      />
-                    </linearGradient>
-                    <linearGradient
-                      id="avgLowPriceGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-                      <stop
-                        offset="95%"
-                        stopColor="#82ca9d"
-                        stopOpacity={0.1}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="timestamp"
-                    tickFormatter={(tick) =>
-                      new Date(tick * 1000).toLocaleString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    }
-                    minTickGap={15}
-                  />
-                  <YAxis
-                    domain={[yAxisMin, yAxisMax]}
-                    tickFormatter={(tick) => `${formatNumber(tick)}\u00A0GP`} // Use a non-breaking space
-                    width={100} // Increase width to fit longer labels
-                    tick={{ dx: -5 }} // Optional: Adjust the position
-                    style={{ fontSize: '12px' }} // Optional: Adjust font size for better fit
-                  />
-                  <Tooltip
-                    content={<ChartTooltipContent />}
-                    formatter={(value: any) => `${formatNumber(value)}\u00A0GP`} // Use a non-breaking space
-                  />
-                  <Area
-                    type="natural" // Use a natural spline for smoothing
-                    dataKey="avgHighPrice"
-                    stroke="#8884d8"
-                    fillOpacity={1}
-                    fill="url(#avgHighPriceGradient)"
-                  />
-                  <Area
-                    type="natural" // Use a natural spline for smoothing
-                    dataKey="avgLowPrice"
-                    stroke="#82ca9d"
-                    fillOpacity={1}
-                    fill="url(#avgLowPriceGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          )}
+          <Card className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm">
+            <CardHeader className="flex items-center justify-between border-b border-gray-300 dark:border-gray-700 py-5 space-y-0 sm:flex-row">
+              <div className="flex items-center gap-2">
+                <Image
+                  src={priceData.iconUrl}
+                  alt={priceData.name}
+                  width={40}
+                  height={40}
+                  className="rounded-full"
+                />
+                <div>
+                  <CardTitle>{priceData.name}</CardTitle>
+                </div>
+              </div>
+              {/* Time selector positioned at the top right */}
+              <Select value={timeRange} onValueChange={setTimeRange}>
+                <SelectTrigger className="w-[160px] rounded-lg sm:ml-auto" aria-label="Select a value">
+                  <SelectValue placeholder="Last 3 months" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="3m" className="rounded-lg">
+                    Last 3 months
+                  </SelectItem>
+                  <SelectItem value="6m" className="rounded-lg">
+                    Last 6 months
+                  </SelectItem>
+                  <SelectItem value="1y" className="rounded-lg">
+                    Last 1 year
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </CardHeader>
+            <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+              <ChartContainer config={chartConfig} className="aspect-auto h-[400px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={timeSeriesData}>
+                    <defs>
+                      <linearGradient id="fillHighPrice" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0.1} />
+                      </linearGradient>
+                      <linearGradient id="fillLowPrice" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0.1} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(tick) => {
+                        const date = new Date(tick);
+                        return date.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric", // Consistency in formatting
+                        });
+                      }}
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      minTickGap={32}
+                    />
+                    <YAxis
+                      domain={[yAxisMin, yAxisMax]}
+                      tickFormatter={(tick) => `${formatNumber(tick)}\u00A0GP`}
+                      width={100}
+                      tick={{ dx: -5 }}
+                      style={{ fontSize: "12px" }}
+                    />
+                    <Tooltip
+                      cursor={false}
+                      content={
+                        <ChartTooltipContent
+                          labelFormatter={(value) => {
+                            // Convert date string to a readable date string
+                            const date = new Date(value);
+                            return date.toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            });
+                          }}
+                          indicator="dot"
+                        />
+                      }
+                    />
+                    <Area
+                      type="natural"
+                      dataKey="avgHighPrice"
+                      fill="url(#fillHighPrice)"
+                      stroke="hsl(var(--chart-1))"
+                      strokeWidth={2}
+                    />
+                    <Area
+                      type="natural"
+                      dataKey="avgLowPrice"
+                      fill="url(#fillLowPrice)"
+                      stroke="hsl(var(--chart-2))"
+                      strokeWidth={2}
+                    />
+                    <ChartLegend content={<ChartLegendContent />} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+            <CardFooter>
+              <div className="flex w-full items-start gap-2 text-sm">
+                <div className="grid gap-2">
+                  <div className="flex items-center gap-2 font-medium leading-none">
+                    {priceTrend && (
+                      <>
+                        {parseFloat(priceTrend) >= 0 ? (
+                          <span>
+                            Trending up by {priceTrend}% this period{" "}
+                            <TrendingUp className="h-4 w-4" />
+                          </span>
+                        ) : (
+                          <span>
+                            Trending down by {Math.abs(parseFloat(priceTrend))}% this period{" "}
+                            <TrendingDown className="h-4 w-4" />
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 leading-none text-muted-foreground">
+                    Showing data for the last{" "}
+                    {timeRange === "3m" ? "3 months" : timeRange === "6m" ? "6 months" : "1 year"}
+                  </div>
+                </div>
+              </div>
+            </CardFooter>
+          </Card>
         </div>
       ) : (
         <p className="text-lg text-gray-900 dark:text-gray-100">
