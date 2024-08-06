@@ -5,17 +5,12 @@
 @tailwind utilities;
 
 /* Additional custom styles if needed */
-html, body {
+html, body, input, h1 {
     transition: background-color 0.3s, color 0.3s;
 }
 
 @layer base {
   :root {
-    --chart-1: 173 58% 39%;
-    --chart-2: 12 76% 61%;
-  }
-
-  .dark {
     --chart-1: 220 70% 50%;
     --chart-2: 340 75% 55%;
   }
