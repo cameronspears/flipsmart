@@ -34,7 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ModeToggle } from "@/components/ModeToggle";
 import SearchBar from "@/components/SearchBar";
 
 interface PriceData {
@@ -143,7 +142,6 @@ const AnalyzePage: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 relative">
-      <ModeToggle />
       <Link href="/">
         <h1 className="text-4xl font-bold mb-6 text-gray-900 dark:text-gray-100 z-10 cursor-pointer">
           Flipsmart
